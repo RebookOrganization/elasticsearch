@@ -1,6 +1,7 @@
 package com.rebook.elasticsearch.dao;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rebook.elasticsearch.dto.RequestFilterSearchDto;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -72,6 +73,33 @@ public class NewsItemEsDao {
       }
     }
     catch (Exception ex) {
+      logger.error("NewsItemEsDao getAllNews exception - " + ex);
+      ex.getLocalizedMessage();
+    }
+
+    return result;
+  }
+
+  public List<Map<String, Object>> searchNewsByFilter(RequestFilterSearchDto request) {
+    List<Map<String, Object>> result = new ArrayList<>();
+    SearchRequest searchRequest = new SearchRequest(INDEX);
+    searchRequest.types(TYPE);
+    SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+
+    SearchResponse searchResponse = null;
+    try {
+      searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+      logger.info("NewsItemEsDao searchNewsByFilter response: {}", searchResponse);
+
+      assert searchResponse != null;
+      SearchHits hits = searchResponse.getHits();
+      for (SearchHit hit: hits.getHits()) {
+        Map<String, Object> map = hit.getSourceAsMap();
+        result.add(map);
+      }
+    }
+    catch (Exception ex) {
+      logger.error("NewsItemEsDao searchNewsByFilter exception - " + ex);
       ex.getLocalizedMessage();
     }
 

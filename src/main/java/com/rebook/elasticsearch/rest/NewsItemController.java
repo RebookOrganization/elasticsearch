@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/news-item")
+@RequestMapping("/es/news-item")
 public class NewsItemController {
 
   @Autowired

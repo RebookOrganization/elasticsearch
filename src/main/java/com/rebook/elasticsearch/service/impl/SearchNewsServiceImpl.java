@@ -14,6 +14,7 @@ import com.rebook.elasticsearch.model.CommentEs;
 import com.rebook.elasticsearch.model.LikeNewsEs;
 import com.rebook.elasticsearch.model.NewsImageEs;
 import com.rebook.elasticsearch.service.SearchNewsService;
+import com.rebook.elasticsearch.utils.GsonUtils;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -69,7 +70,16 @@ public class SearchNewsServiceImpl implements SearchNewsService {
 
   @Override
   public BaseResponse searchNewsByFilter(RequestFilterSearchDto request) {
-    return null;
+    logger.info("searchNewsByFilter request - {}", GsonUtils.toJsonString(request));
+    List<NewsResponseDTO> newsResponseDTOList = new ArrayList<>();
+    List<Map<String, Object>> result = newsItemEsDao.searchNewsByFilter(request);
+
+    for (Map<String, Object> item : result) {
+      newsResponseDTOList.add(mapNewsToNewsResponseDTO(item));
+    }
+
+    return new BaseResponse<>(returnCode, returnMessage,
+        newsResponseDTOList.size(), newsResponseDTOList);
   }
 
   private NewsResponseDTO mapNewsToNewsResponseDTO (Map<String, Object> news) {
