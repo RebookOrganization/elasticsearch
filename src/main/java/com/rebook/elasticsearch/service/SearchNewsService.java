@@ -5,7 +5,7 @@ import com.rebook.elasticsearch.dto.RequestFilterSearchDto;
 
 public interface SearchNewsService {
 
-  BaseResponse getAllNews();
+  BaseResponse getAllNews(int offset);
 
   BaseResponse searchNewsByFilter(RequestFilterSearchDto request);
 }

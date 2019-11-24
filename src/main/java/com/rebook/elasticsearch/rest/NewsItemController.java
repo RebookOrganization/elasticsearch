@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -30,8 +31,8 @@ public class NewsItemController {
   }
 
   @GetMapping("/all-news")
-  public ResponseEntity<?> getAllNews() {
-    return new ResponseEntity<>(searchNewsService.getAllNews(), HttpStatus.OK);
+  public ResponseEntity<?> getAllNews(@RequestParam int offset) {
+    return new ResponseEntity<>(searchNewsService.getAllNews(offset), HttpStatus.OK);
   }
 
   @PostMapping("/search")

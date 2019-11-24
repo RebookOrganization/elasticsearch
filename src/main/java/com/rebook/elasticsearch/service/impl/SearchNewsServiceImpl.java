@@ -55,8 +55,8 @@ public class SearchNewsServiceImpl implements SearchNewsService {
   private String returnMessage = "successfully";
 
   @Override
-  public BaseResponse getAllNews() {
-    List<Map<String, Object>> allNews = newsItemEsDao.getAllNews();
+  public BaseResponse getAllNews(int offset) {
+    List<Map<String, Object>> allNews = newsItemEsDao.getAllNews(offset);
     logger.info("SearchNewsServiceImpl getAllNews - {}", allNews);
     List<NewsResponseDTO> newsResponseDTOList = new ArrayList<>();
 

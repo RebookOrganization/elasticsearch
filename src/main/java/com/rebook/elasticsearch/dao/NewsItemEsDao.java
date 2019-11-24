@@ -16,6 +16,7 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.sort.SortOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
@@ -52,15 +53,19 @@ public class NewsItemEsDao {
     return result;
   }
 
-  public List<Map<String, Object>> getAllNews(){
+  public List<Map<String, Object>> getAllNews(int offset){
+    final int size = 20;
     SearchRequest searchRequest = new SearchRequest(INDEX);
     searchRequest.types(TYPE);
-    SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-    searchSourceBuilder.query(QueryBuilders.matchAllQuery());
-    searchRequest.source(searchSourceBuilder);
+    SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+    sourceBuilder.query(QueryBuilders.matchAllQuery());
+    sourceBuilder.from(offset);
+    sourceBuilder.size(size);
+    sourceBuilder.sort("_id", SortOrder.DESC);
+    searchRequest.source(sourceBuilder);
 
     List<Map<String, Object>> result = new ArrayList<>();
-    SearchResponse searchResponse = null;
+    SearchResponse searchResponse;
     try {
       searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
       logger.info("NewsItemEsDao getAllNews searchResponse: {}", searchResponse);
