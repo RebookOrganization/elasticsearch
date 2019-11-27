@@ -1,10 +1,7 @@
 package com.rebook.elasticsearch.model;
 
-
-//@Document(indexName = "rebook_property_address_es", type = "property_address_es")
 public class PropertyAddressEs {
 
-//    @Id
     private String id;
     private String street;
     private String district;

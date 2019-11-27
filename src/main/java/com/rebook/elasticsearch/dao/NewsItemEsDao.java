@@ -111,4 +111,49 @@ public class NewsItemEsDao {
     return result;
   }
 
+  public List<Map<String, Object>> findAllByPrice(String priceFrom, String priceTo) {
+    List<Map<String, Object>> listNewsPrice = new ArrayList<>();
+
+    return listNewsPrice;
+  }
+
+  public List<Map<String, Object>> findAllByArea(String areaFrom, String areaTo) {
+    List<Map<String, Object>> listNewsArea = new ArrayList<>();
+
+    return listNewsArea;
+  }
+
+  public List<Map<String, Object>> findAllByDirectHouse(String directHouse) {
+    List<Map<String, Object>> listNewsDirectHouse = new ArrayList<>();
+    SearchRequest searchRequest = new SearchRequest(INDEX);
+    searchRequest.types(TYPE);
+    SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+    sourceBuilder.query(QueryBuilders.termQuery("direct_of_house", directHouse));
+    searchRequest.source(sourceBuilder);
+
+    SearchResponse searchResponse;
+    try {
+      searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+      logger.info("NewsItemEsDao findAllByDirectHouse response: {}", searchResponse);
+
+      assert searchResponse != null;
+      SearchHits hits = searchResponse.getHits();
+      for (SearchHit hit: hits.getHits()) {
+        Map<String, Object> map = hit.getSourceAsMap();
+        listNewsDirectHouse.add(map);
+      }
+    }
+    catch (Exception ex) {
+      logger.error("findAllByDirectHouse exception - ", ex);
+    }
+
+    return listNewsDirectHouse;
+  }
+
+  public List<Map<String, Object>> findNewsByAddress(List<Map<String, Object>> listAddress) {
+    List<Map<String, Object>> listNewsAddress = new ArrayList<>();
+
+    return listNewsAddress;
+  }
+
 }
