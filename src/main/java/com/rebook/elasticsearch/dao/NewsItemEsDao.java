@@ -1,9 +1,9 @@
 package com.rebook.elasticsearch.dao;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.rebook.elasticsearch.dto.RequestFilterSearchDto;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.elasticsearch.action.get.GetRequest;
@@ -53,10 +53,11 @@ public class NewsItemEsDao {
     return result;
   }
 
-  public List<Map<String, Object>> getAllNews(int offset){
+  public List<Map<String, Object>> getAllNewsByOffset(int offset){
     final int size = 20;
     SearchRequest searchRequest = new SearchRequest(INDEX);
     searchRequest.types(TYPE);
+
     SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
     sourceBuilder.query(QueryBuilders.matchAllQuery());
     sourceBuilder.from(offset);
@@ -85,40 +86,58 @@ public class NewsItemEsDao {
     return result;
   }
 
-  public List<Map<String, Object>> searchNewsByFilter(RequestFilterSearchDto request) {
-    List<Map<String, Object>> result = new ArrayList<>();
+  public List<Map<String, Object>> findAllByPrice(String priceFrom, String priceTo) {
+    List<Map<String, Object>> listNewsPrice = new ArrayList<>();
     SearchRequest searchRequest = new SearchRequest(INDEX);
     searchRequest.types(TYPE);
-    SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
 
-    SearchResponse searchResponse = null;
+    SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+    sourceBuilder.query(QueryBuilders.rangeQuery("price").gte(priceFrom).lte(priceTo));
+    searchRequest.source(sourceBuilder);
+
+    SearchResponse searchResponse;
     try {
       searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
-      logger.info("NewsItemEsDao searchNewsByFilter response: {}", searchResponse);
+      logger.info("NewsItemEsDao findAllByPrice response: {}", searchResponse);
 
       assert searchResponse != null;
       SearchHits hits = searchResponse.getHits();
       for (SearchHit hit: hits.getHits()) {
         Map<String, Object> map = hit.getSourceAsMap();
-        result.add(map);
+        listNewsPrice.add(map);
       }
     }
     catch (Exception ex) {
-      logger.error("NewsItemEsDao searchNewsByFilter exception - " + ex);
-      ex.getLocalizedMessage();
+      logger.error("findAllByPrice exception - ", ex);
     }
-
-    return result;
-  }
-
-  public List<Map<String, Object>> findAllByPrice(String priceFrom, String priceTo) {
-    List<Map<String, Object>> listNewsPrice = new ArrayList<>();
 
     return listNewsPrice;
   }
 
   public List<Map<String, Object>> findAllByArea(String areaFrom, String areaTo) {
     List<Map<String, Object>> listNewsArea = new ArrayList<>();
+    SearchRequest searchRequest = new SearchRequest(INDEX);
+    searchRequest.types(TYPE);
+
+    SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+    sourceBuilder.query(QueryBuilders.rangeQuery("area").gte(areaFrom).lte(areaTo));
+    searchRequest.source(sourceBuilder);
+
+    SearchResponse searchResponse;
+    try {
+      searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+      logger.info("NewsItemEsDao findAllByPrice response: {}", searchResponse);
+
+      assert searchResponse != null;
+      SearchHits hits = searchResponse.getHits();
+      for (SearchHit hit: hits.getHits()) {
+        Map<String, Object> map = hit.getSourceAsMap();
+        listNewsArea.add(map);
+      }
+    }
+    catch (Exception ex) {
+      logger.error("findAllByPrice exception - ", ex);
+    }
 
     return listNewsArea;
   }
@@ -150,10 +169,29 @@ public class NewsItemEsDao {
     return listNewsDirectHouse;
   }
 
-  public List<Map<String, Object>> findNewsByAddress(List<Map<String, Object>> listAddress) {
-    List<Map<String, Object>> listNewsAddress = new ArrayList<>();
+  public Map<String, Object> findByAddressId(String addressId) {
+    Map<String, Object> newsByAddressId = new HashMap<>();
+    SearchRequest searchRequest = new SearchRequest(INDEX);
+    searchRequest.types(TYPE);
+    SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+    sourceBuilder.query(QueryBuilders.matchQuery("property_address_id", addressId));
+    searchRequest.source(sourceBuilder);
 
-    return listNewsAddress;
+    SearchResponse searchResponse;
+    try {
+      searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+      logger.info("NewsItemEsDao findByAddressId response: {}", searchResponse);
+
+      assert searchResponse != null;
+      SearchHit[] hits = searchResponse.getHits().getHits();
+      newsByAddressId = hits[0].getSourceAsMap();
+
+    }
+    catch (Exception ex) {
+      logger.error("findByAddressId exception - ", ex);
+    }
+
+    return newsByAddressId;
   }
 
 }

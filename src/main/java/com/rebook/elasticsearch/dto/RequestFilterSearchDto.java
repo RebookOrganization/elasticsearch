@@ -3,8 +3,10 @@ package com.rebook.elasticsearch.dto;
 public class RequestFilterSearchDto {
 
   private String content;
-  private String price;
-  private String area;
+  private String priceFrom;
+  private String priceTo;
+  private String areaFrom;
+  private String areaTo;
   private String district;
   private String provinceCity;
   private String transType;
@@ -14,13 +16,21 @@ public class RequestFilterSearchDto {
 
   public void setContent(String content) { this.content = content; }
 
-  public String getPrice() { return price; }
+  public String getPriceFrom() { return priceFrom; }
 
-  public void setPrice(String price) { this.price = price; }
+  public void setPriceFrom(String priceFrom) { this.priceFrom = priceFrom; }
 
-  public String getArea() { return area; }
+  public String getPriceTo() { return priceTo; }
 
-  public void setArea(String area) { this.area = area; }
+  public void setPriceTo(String priceTo) { this.priceTo = priceTo; }
+
+  public String getAreaFrom() { return areaFrom; }
+
+  public void setAreaFrom(String areaFrom) { this.areaFrom = areaFrom; }
+
+  public String getAreaTo() { return areaTo; }
+
+  public void setAreaTo(String areaTo) { this.areaTo = areaTo; }
 
   public String getDistrict() { return district; }
 

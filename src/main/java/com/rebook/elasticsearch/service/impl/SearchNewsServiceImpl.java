@@ -56,7 +56,7 @@ public class SearchNewsServiceImpl implements SearchNewsService {
 
   @Override
   public BaseResponse getAllNews(int offset) {
-    List<Map<String, Object>> allNews = newsItemEsDao.getAllNews(offset);
+    List<Map<String, Object>> allNews = newsItemEsDao.getAllNewsByOffset(offset);
     logger.info("SearchNewsServiceImpl getAllNews - {}", allNews);
     List<NewsResponseDTO> newsResponseDTOList = new ArrayList<>();
 
@@ -72,7 +72,38 @@ public class SearchNewsServiceImpl implements SearchNewsService {
   public BaseResponse searchNewsByFilter(RequestFilterSearchDto request) {
     logger.info("searchNewsByFilter request - {}", GsonUtils.toJsonString(request));
     List<NewsResponseDTO> newsResponseDTOList = new ArrayList<>();
-    List<Map<String, Object>> result = newsItemEsDao.searchNewsByFilter(request);
+    List<Map<String, Object>> result = new ArrayList<>();
+
+    //findNewsByPrice
+    String priceFrom = request.getPriceFrom();
+    String priceTo = request.getPriceTo();
+    if (priceFrom != null && priceTo != null) {
+      result.addAll(newsItemEsDao.findAllByPrice(priceFrom, priceTo));
+    }
+
+    //findNewsByArea
+    String areaFrom = request.getAreaFrom();
+    String areaTo = request.getAreaTo();
+    if (areaFrom != null && areaTo != null) {
+      result.addAll(newsItemEsDao.findAllByArea(areaFrom, areaTo));
+    }
+
+    //findNewsByAddress
+    String district = request.getDistrict();
+    String province = request.getProvinceCity();
+    if (district != null && province != null) {
+      List<Map<String, Object>> listAddressProperty = propertyAddressEsDao.findByAddress(district, province);
+      for (Map<String, Object> map : listAddressProperty) {
+        String addressId = String.valueOf(map.get("id"));
+        result.add(newsItemEsDao.findByAddressId(addressId));
+      }
+    }
+
+    //findNewsByDirectOfHouse
+    String directHouse = request.getDirectHouse();
+    if (directHouse != null && !directHouse.isEmpty()) {
+      result.addAll(newsItemEsDao.findAllByDirectHouse(directHouse));
+    }
 
     for (Map<String, Object> item : result) {
       newsResponseDTOList.add(mapNewsToNewsResponseDTO(item));
