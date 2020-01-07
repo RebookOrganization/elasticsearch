@@ -12,6 +12,7 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
@@ -92,8 +93,10 @@ public class NewsItemEsDao {
     searchRequest.types(TYPE);
 
     SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
-    sourceBuilder.query(QueryBuilders.rangeQuery("price").gte(priceFrom).lte(priceTo));
+    sourceBuilder.query(QueryBuilders.rangeQuery("price_num").gte(priceFrom).lte(priceTo));
     searchRequest.source(sourceBuilder);
+
+    logger.info("NewsItemEsDao findAllByPrice request: {}", searchRequest);
 
     SearchResponse searchResponse;
     try {
@@ -120,13 +123,16 @@ public class NewsItemEsDao {
     searchRequest.types(TYPE);
 
     SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
-    sourceBuilder.query(QueryBuilders.rangeQuery("area").gte(areaFrom).lte(areaTo));
+    sourceBuilder.query(QueryBuilders.rangeQuery("area_num")
+        .gte(areaFrom).lte(areaTo));
     searchRequest.source(sourceBuilder);
+
+    logger.info("NewsItemEsDao findAllByArea request: {}", searchRequest);
 
     SearchResponse searchResponse;
     try {
       searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
-      logger.info("NewsItemEsDao findAllByPrice response: {}", searchResponse);
+      logger.info("NewsItemEsDao findAllByArea response: {}", searchResponse);
 
       assert searchResponse != null;
       SearchHits hits = searchResponse.getHits();
@@ -136,7 +142,7 @@ public class NewsItemEsDao {
       }
     }
     catch (Exception ex) {
-      logger.error("findAllByPrice exception - ", ex);
+      logger.error("findAllByArea exception - ", ex);
     }
 
     return listNewsArea;
@@ -147,8 +153,10 @@ public class NewsItemEsDao {
     SearchRequest searchRequest = new SearchRequest(INDEX);
     searchRequest.types(TYPE);
     SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
-    sourceBuilder.query(QueryBuilders.termQuery("direct_of_house", directHouse));
+    sourceBuilder.query(QueryBuilders.matchQuery("direct_of_house", directHouse));
     searchRequest.source(sourceBuilder);
+
+    logger.info("NewsItemEsDao findAllByDirectHouse request: {}", searchRequest);
 
     SearchResponse searchResponse;
     try {
@@ -192,6 +200,38 @@ public class NewsItemEsDao {
     }
 
     return newsByAddressId;
+  }
+
+  public List<Map<String, Object>> findAllByAreaAndPrice(String priceFrom, String priceTo, String areaFrom, String areaTo) {
+    List<Map<String, Object>> listNewsPriceAndArea = new ArrayList<>();
+
+    SearchRequest searchRequest = new SearchRequest();
+    SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+    BoolQueryBuilder boolQueryBuilder = new BoolQueryBuilder();
+    boolQueryBuilder.must(QueryBuilders.rangeQuery("price_num").gte(priceFrom).lte(priceTo));
+    boolQueryBuilder.must(QueryBuilders.rangeQuery("area_num").gte(areaFrom).lte(areaTo));
+    sourceBuilder.query(boolQueryBuilder);
+    searchRequest.source(sourceBuilder);
+
+    logger.info("NewsItemEsDao findAllByAreaAndPrice request: {}", searchRequest);
+
+    SearchResponse searchResponse;
+    try {
+      searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+      logger.info("NewsItemEsDao findAllByAreaAndPrice response: {}", searchResponse);
+
+      assert searchResponse != null;
+      SearchHits hits = searchResponse.getHits();
+      for (SearchHit hit: hits.getHits()) {
+        Map<String, Object> map = hit.getSourceAsMap();
+        listNewsPriceAndArea.add(map);
+      }
+    }
+    catch (Exception ex) {
+      logger.error("findAllByAreaAndPrice exception - ", ex);
+    }
+
+    return listNewsPriceAndArea;
   }
 
 }

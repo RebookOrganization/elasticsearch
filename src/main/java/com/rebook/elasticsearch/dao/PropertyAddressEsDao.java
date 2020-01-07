@@ -55,23 +55,30 @@ public class PropertyAddressEsDao {
     return result;
   }
 
-  public List<Map<String, Object>> findByAddress(String address, String province) {
+  public List<Map<String, Object>> findByAddress(String content, String district, String province) {
     List<Map<String, Object>> listAddress = new ArrayList<>();
 
     MultiSearchRequest multiSearchRequest = new MultiSearchRequest();
     SearchRequest firstRequest = new SearchRequest(INDEX);
     firstRequest.types(TYPE);
     SearchSourceBuilder firstBuilder = new SearchSourceBuilder();
-    firstBuilder.query(QueryBuilders.termQuery("address", address));
+    firstBuilder.query(QueryBuilders.matchQuery("district", district));
     firstRequest.source(firstBuilder);
     multiSearchRequest.add(firstRequest);
 
     SearchRequest secondRequest = new SearchRequest(INDEX);
     secondRequest.types(TYPE);
     SearchSourceBuilder secondBuilder = new SearchSourceBuilder();
-    secondBuilder.query(QueryBuilders.termQuery("address", province));
+    secondBuilder.query(QueryBuilders.matchQuery("province", province));
     secondRequest.source(secondBuilder);
     multiSearchRequest.add(secondRequest);
+
+    SearchRequest thirdRequest = new SearchRequest(INDEX);
+    thirdRequest.types(TYPE);
+    SearchSourceBuilder thirdBuilder = new SearchSourceBuilder();
+    thirdBuilder.query(QueryBuilders.matchQuery("summary", content));
+    thirdRequest.source(thirdBuilder);
+    multiSearchRequest.add(thirdRequest);
 
     MultiSearchResponse response;
     try {
@@ -87,9 +94,15 @@ public class PropertyAddressEsDao {
       SearchHit[] secondHit = searchSecondResponse.getHits().getHits();
       int secondLen = secondHit.length;
 
-      SearchHit[] result = new SearchHit[firstLen + secondLen];
+      MultiSearchResponse.Item thirdResponse = response.getResponses()[1];
+      SearchResponse searchThirdResponse = thirdResponse.getResponse();
+      SearchHit[] thirdHit = searchThirdResponse.getHits().getHits();
+      int thirdLen = thirdHit.length;
+
+      SearchHit[] result = new SearchHit[firstLen + secondLen + thirdLen];
       System.arraycopy(firstHits, 0, result, 0, firstLen);
       System.arraycopy(secondHit, 0, result, firstLen, secondLen);
+      System.arraycopy(thirdHit, 0, result, secondLen, thirdLen);
 
       logger.info("findByAddress result - {}", Arrays.toString(result));
 

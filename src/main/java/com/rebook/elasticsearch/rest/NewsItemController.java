@@ -3,7 +3,7 @@ package com.rebook.elasticsearch.rest;
 import com.rebook.elasticsearch.dao.NewsItemEsDao;
 import com.rebook.elasticsearch.dto.RequestFilterSearchDto;
 import com.rebook.elasticsearch.service.SearchNewsService;
-import java.util.Map;
+import com.rebook.elasticsearch.utils.GsonUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,9 +25,9 @@ public class NewsItemController {
   @Autowired
   private SearchNewsService searchNewsService;
 
-  @GetMapping("/{id}")
-  public Map<String, Object> getNewsItemById(@PathVariable String id) {
-    return newsItemEsDao.getNewsItemById(id);
+  @GetMapping
+  public ResponseEntity<?> getNewsItemById(@RequestParam String id) {
+    return new ResponseEntity<>(searchNewsService.getNewsById(id), HttpStatus.OK);
   }
 
   @GetMapping("/all-news")
@@ -36,8 +36,19 @@ public class NewsItemController {
   }
 
   @PostMapping("/search")
-  public ResponseEntity<?> searchNewsByFilter(@RequestBody RequestFilterSearchDto request) {
-    return new ResponseEntity<>(searchNewsService.searchNewsByFilter(request), HttpStatus.OK);
+  public ResponseEntity<?> searchNewsByFilter(@RequestBody String request) {
+    RequestFilterSearchDto requestSearch = GsonUtils.fromJsonString(request, RequestFilterSearchDto.class);
+    return new ResponseEntity<>(searchNewsService.searchNewsByFilter(requestSearch), HttpStatus.OK);
+  }
+
+  @GetMapping("/search-price")
+  public ResponseEntity<?> searchByPrice(@RequestParam String priceFrom, @RequestParam String priceTo) {
+    return new ResponseEntity<>(searchNewsService.searchByPrice(priceFrom, priceTo), HttpStatus.OK);
+  }
+
+  @GetMapping("/search-area")
+  public ResponseEntity<?> searchByArea(@RequestParam String areaFrom, @RequestParam String areaTo) {
+    return new ResponseEntity<>(searchNewsService.searchByArea(areaFrom, areaTo), HttpStatus.OK);
   }
 
 }

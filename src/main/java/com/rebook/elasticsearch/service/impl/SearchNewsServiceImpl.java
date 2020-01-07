@@ -8,6 +8,7 @@ import com.rebook.elasticsearch.dao.NewsImageEsDao;
 import com.rebook.elasticsearch.dao.NewsItemEsDao;
 import com.rebook.elasticsearch.dao.PropertyAddressEsDao;
 import com.rebook.elasticsearch.dao.PropertyProjectEsDao;
+import com.rebook.elasticsearch.dao.UserEsDao;
 import com.rebook.elasticsearch.dto.NewsResponseDTO;
 import com.rebook.elasticsearch.dto.RequestFilterSearchDto;
 import com.rebook.elasticsearch.model.CommentEs;
@@ -51,6 +52,9 @@ public class SearchNewsServiceImpl implements SearchNewsService {
   @Autowired
   private CommentEsDao commentEsDao;
 
+  @Autowired
+  private UserEsDao userEsDao;
+
   private int returnCode = 1;
   private String returnMessage = "successfully";
 
@@ -74,33 +78,36 @@ public class SearchNewsServiceImpl implements SearchNewsService {
     List<NewsResponseDTO> newsResponseDTOList = new ArrayList<>();
     List<Map<String, Object>> result = new ArrayList<>();
 
-    //findNewsByPrice
     String priceFrom = request.getPriceFrom();
     String priceTo = request.getPriceTo();
-    if (priceFrom != null && priceTo != null) {
-      result.addAll(newsItemEsDao.findAllByPrice(priceFrom, priceTo));
-    }
-
-    //findNewsByArea
     String areaFrom = request.getAreaFrom();
     String areaTo = request.getAreaTo();
-    if (areaFrom != null && areaTo != null) {
-      result.addAll(newsItemEsDao.findAllByArea(areaFrom, areaTo));
-    }
-
-    //findNewsByAddress
     String district = request.getDistrict();
     String province = request.getProvinceCity();
-    if (district != null && province != null) {
-      List<Map<String, Object>> listAddressProperty = propertyAddressEsDao.findByAddress(district, province);
+    String content = request.getContent();
+    String directHouse = request.getDirectHouse();
+
+    if (province != null && !province.isEmpty()) {
+      List<Map<String, Object>> listAddressProperty = propertyAddressEsDao.findByAddress(content, district, province);
       for (Map<String, Object> map : listAddressProperty) {
         String addressId = String.valueOf(map.get("id"));
-        result.add(newsItemEsDao.findByAddressId(addressId));
+        Map<String, Object> news = newsItemEsDao.findByAddressId(addressId);
+        double priceNum = Double.parseDouble((String) news.get("price_num"));
+        double areaNum = Double.parseDouble((String) news.get("area_num"));
+        if (priceNum >= Double.parseDouble(priceFrom) && priceNum <= Double.parseDouble(priceTo)) {
+          result.add(newsItemEsDao.findByAddressId(addressId));
+        }
+
+        if (areaNum >= Double.parseDouble(areaFrom) && areaNum <= Double.parseDouble(areaTo)) {
+          result.add(newsItemEsDao.findByAddressId(addressId));
+        }
+
       }
     }
+    else {
+      result.addAll(newsItemEsDao.findAllByAreaAndPrice(priceFrom, priceTo, areaFrom, areaTo));
+    }
 
-    //findNewsByDirectOfHouse
-    String directHouse = request.getDirectHouse();
     if (directHouse != null && !directHouse.isEmpty()) {
       result.addAll(newsItemEsDao.findAllByDirectHouse(directHouse));
     }
@@ -109,8 +116,33 @@ public class SearchNewsServiceImpl implements SearchNewsService {
       newsResponseDTOList.add(mapNewsToNewsResponseDTO(item));
     }
 
+    logger.info("searchNewsByFilter response: {}", GsonUtils.toJsonString(newsResponseDTOList));
+
     return new BaseResponse<>(returnCode, returnMessage,
         newsResponseDTOList.size(), newsResponseDTOList);
+  }
+
+  @Override
+  public List<Map<String, Object>> searchByPrice(String priceFrom, String priceTo) {
+    return newsItemEsDao.findAllByPrice(priceFrom, priceTo);
+  }
+
+  @Override
+  public List<Map<String, Object>> searchByArea(String areaFrom, String areaTo) {
+    return newsItemEsDao.findAllByArea(areaFrom, areaTo);
+  }
+
+  @Override
+  public BaseResponse getNewsById(String id) {
+    try {
+      Map<String, Object> newsItem = newsItemEsDao.getNewsItemById(id);
+      NewsResponseDTO newsResponseDTO = mapNewsToNewsResponseDTO(newsItem);
+      return new BaseResponse<>(1, "Successfully", newsResponseDTO);
+    }
+    catch (Exception ex) {
+      logger.info("getNewsById Exception: ", ex);
+      return new BaseResponse<>(0, ex.getMessage(), null);
+    }
   }
 
   private NewsResponseDTO mapNewsToNewsResponseDTO (Map<String, Object> news) {
@@ -123,6 +155,10 @@ public class SearchNewsServiceImpl implements SearchNewsService {
     newsResponseDTO.setPubDate((String) news.get("pub_date"));
     newsResponseDTO.setNewsId(Long.parseLong(news.get("id").toString()));
     newsResponseDTO.setUserId(Long.parseLong(news.get("user_id").toString()));
+
+    Map<String, Object> user = userEsDao.getById(news.get("user_id").toString());
+    newsResponseDTO.setUsername(user.get("name").toString());
+    newsResponseDTO.setImageUser(user.get("image_url").toString());
 
     Set<NewsImageEs> newsImageEsSet = new HashSet<>();
     List<Map<String, Object>> mapImagesList = newsImageEsDao.getByNewsId(String.valueOf(news.get("id")));
