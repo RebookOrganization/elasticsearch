@@ -28,7 +28,7 @@
 	    </triggeringPolicy>
   	</appender>
 	<appender name="actionLogFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
-		<File>${logdir}/RebookActionLog.log</File>
+		<File>${logdir}/ElasticsearchLog.log</File>
 		<encoder>
 			<pattern>%d %p [%c] - %m{50}%n</pattern>
 		</encoder>

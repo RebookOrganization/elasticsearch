@@ -1,6 +1,7 @@
 package com.rebook.elasticsearch.dao;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rebook.elasticsearch.model.UserEs;
 import java.util.Map;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
@@ -26,7 +27,7 @@ public class UserEsDao {
     this.objectMapper = objectMapper;
   }
 
-  public Map<String, Object> getById(String id) {
+  public Map<String, Object> getUserById(String id) {
     GetRequest getRequest = new GetRequest(INDEX, TYPE, id);
     GetResponse getResponse = null;
     try {

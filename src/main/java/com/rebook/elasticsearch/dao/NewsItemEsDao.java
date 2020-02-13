@@ -63,7 +63,7 @@ public class NewsItemEsDao {
     sourceBuilder.query(QueryBuilders.matchAllQuery());
     sourceBuilder.from(offset);
     sourceBuilder.size(size);
-    sourceBuilder.sort("_id", SortOrder.DESC);
+    sourceBuilder.sort("@timestamp", SortOrder.DESC);
     searchRequest.source(sourceBuilder);
 
     List<Map<String, Object>> result = new ArrayList<>();

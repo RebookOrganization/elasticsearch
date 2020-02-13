@@ -8,12 +8,16 @@ import com.rebook.elasticsearch.dao.NewsImageEsDao;
 import com.rebook.elasticsearch.dao.NewsItemEsDao;
 import com.rebook.elasticsearch.dao.PropertyAddressEsDao;
 import com.rebook.elasticsearch.dao.PropertyProjectEsDao;
+import com.rebook.elasticsearch.dao.ShareNewsEsDao;
 import com.rebook.elasticsearch.dao.UserEsDao;
+import com.rebook.elasticsearch.dto.CommentNewsDTO;
+import com.rebook.elasticsearch.dto.LikeNewsDTO;
 import com.rebook.elasticsearch.dto.NewsResponseDTO;
 import com.rebook.elasticsearch.dto.RequestFilterSearchDto;
-import com.rebook.elasticsearch.model.CommentEs;
-import com.rebook.elasticsearch.model.LikeNewsEs;
+import com.rebook.elasticsearch.dto.ShareNewsDTO;
 import com.rebook.elasticsearch.model.NewsImageEs;
+import com.rebook.elasticsearch.model.ShareNewsEs;
+import com.rebook.elasticsearch.model.UserEs;
 import com.rebook.elasticsearch.service.SearchNewsService;
 import com.rebook.elasticsearch.utils.GsonUtils;
 import java.util.ArrayList;
@@ -51,6 +55,9 @@ public class SearchNewsServiceImpl implements SearchNewsService {
 
   @Autowired
   private CommentEsDao commentEsDao;
+
+  @Autowired
+  private ShareNewsEsDao shareNewsEsDao;
 
   @Autowired
   private UserEsDao userEsDao;
@@ -92,16 +99,20 @@ public class SearchNewsServiceImpl implements SearchNewsService {
       for (Map<String, Object> map : listAddressProperty) {
         String addressId = String.valueOf(map.get("id"));
         Map<String, Object> news = newsItemEsDao.findByAddressId(addressId);
-        double priceNum = Double.parseDouble((String) news.get("price_num"));
-        double areaNum = Double.parseDouble((String) news.get("area_num"));
-        if (priceNum >= Double.parseDouble(priceFrom) && priceNum <= Double.parseDouble(priceTo)) {
-          result.add(newsItemEsDao.findByAddressId(addressId));
+
+        if (news.get("price_num") != null) {
+          double priceNum = Double.parseDouble(news.get("price_num").toString());
+          if (priceNum >= Double.parseDouble(priceFrom) && priceNum <= Double.parseDouble(priceTo)) {
+            result.add(newsItemEsDao.findByAddressId(addressId));
+          }
         }
 
-        if (areaNum >= Double.parseDouble(areaFrom) && areaNum <= Double.parseDouble(areaTo)) {
-          result.add(newsItemEsDao.findByAddressId(addressId));
+        if (news.get("area_num") != null) {
+          double areaNum = Double.parseDouble(news.get("area_num").toString());
+          if (areaNum >= Double.parseDouble(areaFrom) && areaNum <= Double.parseDouble(areaTo)) {
+            result.add(newsItemEsDao.findByAddressId(addressId));
+          }
         }
-
       }
     }
     else {
@@ -156,7 +167,7 @@ public class SearchNewsServiceImpl implements SearchNewsService {
     newsResponseDTO.setNewsId(Long.parseLong(news.get("id").toString()));
     newsResponseDTO.setUserId(Long.parseLong(news.get("user_id").toString()));
 
-    Map<String, Object> user = userEsDao.getById(news.get("user_id").toString());
+    Map<String, Object> user = userEsDao.getUserById(news.get("user_id").toString());
     newsResponseDTO.setUsername(user.get("name").toString());
     newsResponseDTO.setImageUser(user.get("image_url").toString());
 
@@ -189,29 +200,57 @@ public class SearchNewsServiceImpl implements SearchNewsService {
       newsResponseDTO.setContactEmail((String) contact.get("email"));
     }
 
-    List<LikeNewsEs> likeNewsEsList = new ArrayList<>();
+    List<LikeNewsDTO> likeNewsDTOList = new ArrayList<>();
     List<Map<String, Object>> mapList = likeNewsEsDao.getByNewsId(String.valueOf(news.get("id")));
     for (Map<String, Object> map : mapList) {
-      LikeNewsEs likeNewsEs = new LikeNewsEs();
-      likeNewsEs.setId(Long.parseLong(map.get("id").toString()));
-      likeNewsEs.setLike((Boolean) map.get("is_like"));
-      likeNewsEs.setNewsItemId(Long.parseLong(map.get("news_item_id").toString()));
-      likeNewsEs.setUserId(Long.parseLong(map.get("user_id").toString()));
-      likeNewsEsList.add(likeNewsEs);
-    }
-    newsResponseDTO.setLikeNewsList(likeNewsEsList);
+      LikeNewsDTO likeNewsDTO = new LikeNewsDTO();
+      likeNewsDTO.setId(Long.parseLong(map.get("id").toString()));
+      likeNewsDTO.setLike((Boolean) map.get("is_like"));
+      likeNewsDTO.setNewsItemId(Long.parseLong(map.get("news_item_id").toString()));
+      likeNewsDTO.setUserId(Long.parseLong(map.get("user_id").toString()));
+      Map<String, Object> userLike = userEsDao.getUserById(map.get("user_id").toString());
+      if (userLike != null) {
+        likeNewsDTO.setUserName(userLike.get("name").toString());
+        likeNewsDTO.setUserImageUrl(userLike.get("image_url").toString());
+      }
 
-    List<CommentEs> commentEsList = new ArrayList<>();
+      likeNewsDTOList.add(likeNewsDTO);
+    }
+    newsResponseDTO.setLikeNewsList(likeNewsDTOList);
+
+    List<CommentNewsDTO> commentEsList = new ArrayList<>();
     List<Map<String, Object>> mapCommentList = commentEsDao.getByNewsId(String.valueOf(news.get("id")));
     for (Map<String, Object> map : mapCommentList) {
-      CommentEs commentEs = new CommentEs();
-      commentEs.setId(Long.parseLong(map.get("id").toString()));
-      commentEs.setContent((String) map.get("content"));
-      commentEs.setNewItemId(Long.parseLong(map.get("news_item_id").toString()));
-      commentEs.setUserId(Long.parseLong(map.get("user_id").toString()));
-      commentEsList.add(commentEs);
+      CommentNewsDTO commentNewsDTO = new CommentNewsDTO();
+      commentNewsDTO.setId(Long.parseLong(map.get("id").toString()));
+      commentNewsDTO.setContent((String) map.get("content"));
+      commentNewsDTO.setNewItemId(Long.parseLong(map.get("news_item_id").toString()));
+      commentNewsDTO.setUserId(Long.parseLong(map.get("user_id").toString()));
+      Map<String, Object> userComment = userEsDao.getUserById(map.get("user_id").toString());
+      if (userComment != null) {
+        commentNewsDTO.setUserName(userComment.get("name").toString());
+        commentNewsDTO.setUserImageUrl(userComment.get("image_url").toString());
+      }
+      commentEsList.add(commentNewsDTO);
     }
     newsResponseDTO.setCommentList(commentEsList);
+
+    List<ShareNewsDTO> shareNewsDTOList = new ArrayList<>();
+    List<ShareNewsEs> shareNewsEsList = shareNewsEsDao.getByNewsId(String.valueOf(news.get("id")));
+    for (ShareNewsEs shareNewsEs : shareNewsEsList) {
+      ShareNewsDTO shareNewsDTO = new ShareNewsDTO();
+      shareNewsDTO.setId(shareNewsEs.getId());
+      shareNewsDTO.setShare(shareNewsEs.isShare());
+      shareNewsDTO.setNewItemId(shareNewsEs.getNewItemId());
+      shareNewsDTO.setUserId(shareNewsEs.getUserId());
+      Map<String, Object> userShare = userEsDao.getUserById(shareNewsEs.getUserId().toString());
+      if (userShare != null) {
+        shareNewsDTO.setUserName(userShare.get("name").toString());
+        shareNewsDTO.setUserImageUrl(userShare.get("image_url").toString());
+      }
+      shareNewsDTOList.add(shareNewsDTO);
+    }
+    newsResponseDTO.setShareNewsList(shareNewsDTOList);
 
     return  newsResponseDTO;
   }

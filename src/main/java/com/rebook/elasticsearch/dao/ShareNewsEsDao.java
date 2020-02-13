@@ -1,6 +1,7 @@
 package com.rebook.elasticsearch.dao;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rebook.elasticsearch.model.ShareNewsEs;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +34,7 @@ public class ShareNewsEsDao {
     this.objectMapper = objectMapper;
   }
 
-  public Map<String, Object> getById(String id) {
+  public ShareNewsEs getShareById(String id) {
     GetRequest getRequest = new GetRequest(INDEX, TYPE, id);
     GetResponse getResponse = null;
     try {
@@ -44,11 +45,11 @@ public class ShareNewsEsDao {
       logger.error("ShareNewsEsDao getById exception - {}", ex.getMessage());
     }
     assert getResponse != null;
-    return getResponse.getSourceAsMap();
+    return objectMapper.convertValue(getResponse.getSourceAsMap(), ShareNewsEs.class);
   }
 
-  public List<Map<String, Object>> getByNewsId(String newsId) {
-    List<Map<String, Object>> result = new ArrayList<>();
+  public List<ShareNewsEs> getByNewsId(String newsId) {
+    List<ShareNewsEs> result = new ArrayList<>();
     SearchRequest searchRequest = new SearchRequest(INDEX);
     searchRequest.types(TYPE);
     SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
@@ -63,7 +64,7 @@ public class ShareNewsEsDao {
       SearchHits hits = searchResponse.getHits();
       for (SearchHit hit: hits.getHits()) {
         Map<String, Object> map = hit.getSourceAsMap();
-        result.add(map);
+        result.add(objectMapper.convertValue(map, ShareNewsEs.class));
       }
     }
     catch (Exception ex) {

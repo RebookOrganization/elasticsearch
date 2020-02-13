@@ -1,9 +1,6 @@
 package com.rebook.elasticsearch.dto;
 
-import com.rebook.elasticsearch.model.CommentEs;
-import com.rebook.elasticsearch.model.LikeNewsEs;
 import com.rebook.elasticsearch.model.NewsImageEs;
-import com.rebook.elasticsearch.model.ShareNewsEs;
 import java.util.List;
 import java.util.Set;
 
@@ -30,9 +27,9 @@ public class NewsResponseDTO {
   private String projectOwner;
   private String projectSize;
 
-  private List<LikeNewsEs> likeNewsList;
-  private List<CommentEs> commentList;
-  private List<ShareNewsEs> shareNewsList;
+  private List<LikeNewsDTO> likeNewsList;
+  private List<CommentNewsDTO> commentList;
+  private List<ShareNewsDTO> shareNewsList;
 
   private Set<NewsImageEs> imageUrlList;
 
@@ -156,28 +153,27 @@ public class NewsResponseDTO {
     this.projectSize = projectSize;
   }
 
-  public List<LikeNewsEs> getLikeNewsList() {
+  public List<LikeNewsDTO> getLikeNewsList() {
     return likeNewsList;
   }
 
-  public void setLikeNewsList(List<LikeNewsEs> likeNewsList) {
+  public void setLikeNewsList(List<LikeNewsDTO> likeNewsList) {
     this.likeNewsList = likeNewsList;
   }
 
-  public List<CommentEs> getCommentList() {
+  public List<CommentNewsDTO> getCommentList() {
     return commentList;
   }
 
-  public void setCommentList(List<CommentEs> commentList) {
+  public void setCommentList(List<CommentNewsDTO> commentList) {
     this.commentList = commentList;
   }
 
-  public List<ShareNewsEs> getShareNewsList() {
+  public List<ShareNewsDTO> getShareNewsList() {
     return shareNewsList;
   }
 
-  public void setShareNewsList(List<ShareNewsEs> shareNewsList) {
+  public void setShareNewsList(List<ShareNewsDTO> shareNewsList) {
     this.shareNewsList = shareNewsList;
   }
-
 }
